@@ -1,4 +1,3 @@
-# Crayfish
 Crayfish ultrastructure datasets. 
 ## Datasets
 - [Apodeme transition to sarcomeres](https://uvicbioemlab.github.io/crayfish/crayfish-EM/crayfish%20claw%20muscle_apodeme%20transition%20to%20sarcomeres_5nm-px/index.html)
