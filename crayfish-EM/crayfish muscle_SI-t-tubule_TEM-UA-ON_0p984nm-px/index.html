@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="utf-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1">
+
+<title>crayfish muscle_SI-t-tubule_TEM-UA-ON_0p984nm-px</title>
+
+<link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
+>
+
+<style>
+
+html,
+body,
+#map {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #111;
+}
+
+
+/* -----------------------------------------------------------
+   Coordinate readout
+   ----------------------------------------------------------- */
+
+#info {
+    position: absolute;
+
+    z-index: 1000;
+
+    top: 10px;
+    left: 50px;
+
+    padding: 6px 10px;
+
+    color: white;
+    background: rgba(0, 0, 0, 0.72);
+
+    border-radius: 4px;
+
+    font-family: sans-serif;
+    font-size: 13px;
+
+    pointer-events: none;
+}
+
+
+/* -----------------------------------------------------------
+   Custom microscopy scale bar
+   ----------------------------------------------------------- */
+
+#scale-bar {
+    position: absolute;
+
+    z-index: 1000;
+
+    left: 15px;
+    bottom: 15px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    pointer-events: none;
+
+    color: white;
+
+    font-family: sans-serif;
+
+    font-size: 12px;
+
+    font-weight: bold;
+
+    text-shadow:
+        0 0 2px black,
+        0 0 2px black;
+}
+
+
+#scale-line {
+    height: 6px;
+
+    min-width: 20px;
+
+    background: white;
+
+    border: 1px solid black;
+
+    box-sizing: border-box;
+
+    box-shadow:
+        0 0 2px black;
+
+    margin-bottom: 3px;
+}
+
+
+#scale-label {
+    padding: 2px 5px;
+
+    background: rgba(0, 0, 0, 0.65);
+
+    border-radius: 3px;
+
+    white-space: nowrap;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="map"></div>
+
+<div id="info">
+    crayfish muscle_SI-t-tubule_TEM-UA-ON_0p984nm-px
+</div>
+
+<div id="scale-bar">
+
+    <div id="scale-line"></div>
+
+    <div id="scale-label">
+        --
+    </div>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+
+// ============================================================
+// IMAGE SETTINGS
+// ============================================================
+
+const IMAGE_WIDTH = 14355;
+
+const IMAGE_HEIGHT = 7488;
+
+const MAX_LEVEL = 14;
+
+const TILE_SIZE = 256;
+
+const MPP = 0.000984;
+
+const TILE_ROOT = "crayfish muscle_SI-t-tubule_TEM-UA-ON_0p984nm-px_files";
+
+const IMAGE_FORMAT = "jpg";
+
+
+// ============================================================
+// CUSTOM CRS
+// ============================================================
+
+const DZI_SCALE =
+    1 / Math.pow(2, MAX_LEVEL);
+
+const DZI_CRS = L.extend(
+    {},
+    L.CRS.Simple,
+    {
+        transformation:
+            new L.Transformation(
+                DZI_SCALE,
+                0,
+                DZI_SCALE,
+                0
+            )
+    }
+);
+
+
+// ============================================================
+// IMAGE BOUNDS
+// ============================================================
+
+const IMAGE_BOUNDS = [
+    [0, 0],
+    [IMAGE_HEIGHT, IMAGE_WIDTH]
+];
+
+
+// ============================================================
+// MAP
+// ============================================================
+
+const map = L.map(
+    "map",
+    {
+
+        crs: DZI_CRS,
+
+        minZoom: 0,
+
+        maxZoom: MAX_LEVEL,
+
+        zoomSnap: 1,
+
+        zoomDelta: 1,
+
+        zoomControl: true,
+
+        attributionControl: false
+
+    }
+);
+
+
+// ============================================================
+// DZI TILE LAYER
+// ============================================================
+
+const imageLayer = L.tileLayer(
+
+    TILE_ROOT +
+    "/{z}/{x}_{y}." +
+    IMAGE_FORMAT,
+
+    {
+
+        tileSize: TILE_SIZE,
+
+        minZoom: 0,
+
+        maxZoom: MAX_LEVEL,
+
+        minNativeZoom: 0,
+
+        maxNativeZoom: MAX_LEVEL,
+
+        noWrap: true,
+
+        bounds: IMAGE_BOUNDS,
+
+        keepBuffer: 3,
+
+        updateWhenIdle: false,
+
+        updateWhenZooming: true
+
+    }
+
+);
+
+imageLayer.addTo(map);
+
+
+// ============================================================
+// CENTER IMAGE
+// ============================================================
+
+function centerImage() {
+
+    map.invalidateSize();
+
+    map.fitBounds(
+        IMAGE_BOUNDS,
+        {
+            padding: [20, 20],
+            animate: false
+        }
+    );
+}
+
+
+// Initial positioning.
+setTimeout(
+    centerImage,
+    100
+);
+
+
+// Re-center after browser resize.
+window.addEventListener(
+    "resize",
+    function() {
+
+        setTimeout(
+            centerImage,
+            100
+        );
+
+    }
+);
+
+
+// ============================================================
+// LIMIT PANNING
+// ============================================================
+
+map.setMaxBounds(
+    IMAGE_BOUNDS
+);
+
+map.options.maxBoundsViscosity = 1.0;
+
+
+// ============================================================
+// FORMAT DISTANCE
+// ============================================================
+
+function formatDistance(um) {
+
+    if (!Number.isFinite(um) || um <= 0) {
+
+        return "--";
+
+    }
+
+
+    if (um < 1) {
+
+        return um.toFixed(2) + " µm";
+
+    }
+
+
+    if (um < 10) {
+
+        return um.toFixed(1) + " µm";
+
+    }
+
+
+    if (um < 1000) {
+
+        return Math.round(um) + " µm";
+
+    }
+
+
+    const mm = um / 1000;
+
+
+    if (mm < 10) {
+
+        return mm.toFixed(1) + " mm";
+
+    }
+
+
+    return Math.round(mm) + " mm";
+}
+
+
+// ============================================================
+// SCALE BAR
+// ============================================================
+
+function updateScaleBar() {
+
+    const scaleLine =
+        document.getElementById(
+            "scale-line"
+        );
+
+    const scaleLabel =
+        document.getElementById(
+            "scale-label"
+        );
+
+
+    // --------------------------------------------------------
+    // Measure actual map coordinates represented by
+    // 100 screen pixels.
+    // --------------------------------------------------------
+
+    const p1 =
+        map.containerPointToLatLng(
+            L.point(0, 0)
+        );
+
+    const p2 =
+        map.containerPointToLatLng(
+            L.point(100, 0)
+        );
+
+
+    // Leaflet longitude corresponds to image X.
+    const imagePixels =
+        Math.abs(
+            p2.lng - p1.lng
+        );
+
+
+    if (
+        !Number.isFinite(imagePixels) ||
+        imagePixels <= 0
+    ) {
+
+        scaleLine.style.width = "100px";
+
+        scaleLabel.textContent = "--";
+
+        return;
+    }
+
+
+    // --------------------------------------------------------
+    // Convert image pixels to physical distance.
+    // --------------------------------------------------------
+
+    const umPer100ScreenPixels =
+        imagePixels * MPP;
+
+
+    const umPerScreenPixel =
+        umPer100ScreenPixels / 100;
+
+
+    // --------------------------------------------------------
+    // Aim for a ~100 pixel scale bar.
+    // --------------------------------------------------------
+
+    const targetPixels = 100;
+
+    const targetUm =
+        targetPixels *
+        umPerScreenPixel;
+
+
+    // --------------------------------------------------------
+    // Select a nice 1 / 2 / 5 value.
+    // --------------------------------------------------------
+
+    const exponent =
+        Math.floor(
+            Math.log10(targetUm)
+        );
+
+
+    const base =
+        targetUm /
+        Math.pow(
+            10,
+            exponent
+        );
+
+
+    let niceBase;
+
+
+    if (base >= 5) {
+
+        niceBase = 5;
+
+    }
+    else if (base >= 2) {
+
+        niceBase = 2;
+
+    }
+    else {
+
+        niceBase = 1;
+
+    }
+
+
+    const niceUm =
+        niceBase *
+        Math.pow(
+            10,
+            exponent
+        );
+
+
+    // --------------------------------------------------------
+    // Convert selected physical distance back to screen
+    // pixels.
+    // --------------------------------------------------------
+
+    const linePixels =
+        niceUm /
+        umPerScreenPixel;
+
+
+    // Keep it visually useful.
+    const visiblePixels =
+        Math.max(
+            20,
+            Math.min(
+                180,
+                Math.round(linePixels)
+            )
+        );
+
+
+    scaleLine.style.width =
+        visiblePixels + "px";
+
+
+    scaleLabel.textContent =
+        formatDistance(niceUm);
+}
+
+
+// Update scale initially.
+setTimeout(
+    updateScaleBar,
+    200
+);
+
+
+// Update whenever zoom changes.
+map.on(
+    "zoomend",
+    updateScaleBar
+);
+
+
+// Update after resize.
+map.on(
+    "resize",
+    updateScaleBar
+);
+
+
+// ============================================================
+// MOUSE COORDINATES
+// ============================================================
+
+map.on(
+    "mousemove",
+    function(e) {
+
+        const x =
+            e.latlng.lng;
+
+        const y =
+            e.latlng.lat;
+
+
+        document.getElementById(
+            "info"
+        ).textContent =
+
+            "crayfish muscle_SI-t-tubule_TEM-UA-ON_0p984nm-px" +
+            " | " +
+            Math.round(
+                x
+            ).toLocaleString() +
+            " × " +
+            Math.round(
+                y
+            ).toLocaleString() +
+            " px" +
+            " | " +
+            formatDistance(
+                x * MPP
+            ) +
+            " × " +
+            formatDistance(
+                y * MPP
+            );
+    }
+);
+
+</script>
+
+</body>
+
+</html>
